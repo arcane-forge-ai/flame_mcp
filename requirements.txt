@@ -1,0 +1,17 @@
+# Core dependencies
+markdownify>=1.1.0
+beautifulsoup4>=4.12.0
+fastmcp>=2.6.1
+openai>=1.84.0
+qdrant-client>=1.14.2
+python-dotenv>=1.1.0
+tiktoken>=0.9.0
+tqdm>=4.67.1
+
+# Optional dependencies for enhanced functionality
+lxml>=5.4.0  # Better HTML parsing
+requests>=2.32.3  # HTTP requests (used by clients)
+
+# Testing dependencies
+pytest>=8.4.0
+pytest-mock>=3.14.1  # Better mocking utilities 

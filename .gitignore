@@ -1,0 +1,22 @@
+# Miscellaneous
+*.class
+*.bak
+*.fvm
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.vscode/
+.venv/
+
+# Sphinx related
+__pycache__/
+_build/
+
+# Flame MCP
+.env
+playground*
+processing_state.json
