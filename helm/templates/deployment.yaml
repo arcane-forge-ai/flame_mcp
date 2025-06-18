@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flame-mcp-server.fullname" . }}
+  labels:
+    {{- include "flame-mcp-server.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "flame-mcp-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "flame-mcp-server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "flame-mcp-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          {{- if .Values.healthCheck.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+            timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}
+            successThreshold: {{ .Values.healthCheck.successThreshold }}
+            failureThreshold: {{ .Values.healthCheck.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+            timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}
+            successThreshold: {{ .Values.healthCheck.successThreshold }}
+            failureThreshold: {{ .Values.healthCheck.failureThreshold }}
+          {{- end }}
+          env:
+            # Qdrant Configuration
+            - name: QDRANT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: qdrant-host
+            - name: QDRANT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: qdrant-port
+            {{- if .Values.secrets.qdrant.token }}
+            - name: QDRANT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-secret
+                  key: qdrant-token
+            {{- end }}
+            
+            # Collection Configuration
+            - name: COLLECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: collection-name
+            
+            # Azure OpenAI Configuration
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-secret
+                  key: openai-api-key
+            - name: OPENAI_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-secret
+                  key: openai-api-base
+            - name: OPENAI_API_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: openai-api-version
+            - name: OPENAI_MODEL_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: openai-model-name
+            
+            # Rate Limiting Configuration
+            - name: OPENAI_MAX_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: openai-max-retries
+            - name: OPENAI_BASE_DELAY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: openai-base-delay
+            - name: OPENAI_BATCH_DELAY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "flame-mcp-server.fullname" . }}-config
+                  key: openai-batch-delay
+          
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+          {{- end }}
+      
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ include "flame-mcp-server.fullname" . }}-logs
+      {{- end }}
+      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 

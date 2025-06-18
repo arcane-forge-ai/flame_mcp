@@ -6,6 +6,7 @@ Checks environment and starts the MCP server with proper configuration.
 
 import os
 import sys
+import argparse
 from pathlib import Path
 
 def check_environment():
@@ -45,27 +46,62 @@ def check_dependencies():
         print("   pip install -r requirements.txt")
         return False
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Flame MCP Server Launcher')
+    parser.add_argument(
+        '--http', 
+        action='store_true',
+        help='Start server in Streamable HTTP mode (recommended for Docker deployments)'
+    )
+    parser.add_argument(
+        '--host',
+        default='0.0.0.0',
+        help='Host to bind to in HTTP mode (default: 0.0.0.0)'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=8000,
+        help='Port to bind to in HTTP mode (default: 8000)'
+    )
+    parser.add_argument(
+        '--path',
+        default='/mcp',
+        help='Path for MCP endpoint in HTTP mode (default: /mcp)'
+    )
+    return parser.parse_args()
+
 def main():
     """Main launcher function."""
+    args = parse_args()
+    
     print("🚀 Flame MCP Server Launcher")
     print("=" * 40)
     
-    # Check if .env file exists
-    env_file = Path(".env")
-    if not env_file.exists():
-        print("⚠️  No .env file found. Creating from template...")
-        if Path("env.example").exists():
-            print("   Please copy env.example to .env and configure it:")
-            print("   cp env.example .env")
-        else:
-            print("   Please create a .env file with your configuration.")
-        sys.exit(1)
+    # Check if environment variables are already set (e.g., from Kubernetes)
+    required_vars = ["OPENAI_API_KEY", "OPENAI_API_BASE", "QDRANT_HOST"]
+    env_vars_present = all(os.getenv(var) for var in required_vars)
     
-    # Load environment variables
-    from dotenv import load_dotenv
-    load_dotenv()
-    
-    print("✅ Environment file loaded")
+    if env_vars_present:
+        print("✅ Environment variables detected (likely from container/K8s)")
+    else:
+        # Check if .env file exists
+        env_file = Path(".env")
+        if not env_file.exists():
+            print("⚠️  No .env file found. Creating from template...")
+            if Path("env.example").exists():
+                print("   Please copy env.example to .env and configure it:")
+                print("   cp env.example .env")
+            else:
+                print("   Please create a .env file with your configuration.")
+            sys.exit(1)
+        
+        # Load environment variables from file
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        print("✅ Environment file loaded")
     
     # Check dependencies
     if not check_dependencies():
@@ -103,14 +139,36 @@ def main():
         sys.exit(1)
     
     # Start the server
-    print("\n🎯 Starting MCP Server...")
+    if args.http:
+        print(f"\n🌐 Starting MCP Server in Streamable HTTP mode...")
+        print(f"   Host: {args.host}")
+        print(f"   Port: {args.port}")
+        print(f"   Path: {args.path}")
+        print(f"   Health check: http://{args.host}:{args.port}/health")
+        print("   This mode is recommended for Docker deployments")
+    else:
+        print("\n🎯 Starting MCP Server in STDIO mode...")
+        print("   This mode is for local development and Claude Desktop integration")
+    
     print("   Server will run until interrupted (Ctrl+C)")
     print("   Logs will show search queries and results")
     print("-" * 40)
     
     try:
         from server import mcp
-        mcp.run()
+        
+        if args.http:
+            # Start in Streamable HTTP mode
+            mcp.run(
+                transport="streamable-http",
+                host=args.host,
+                port=args.port,
+                path=args.path
+            )
+        else:
+            # Start in STDIO mode (default)
+            mcp.run()
+            
     except KeyboardInterrupt:
         print("\n\n👋 Server stopped by user")
     except Exception as e:

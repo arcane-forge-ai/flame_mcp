@@ -1,0 +1,20 @@
+apiVersion: v2
+name: flame-mcp-server
+description: A Helm chart for Flame MCP Server - semantic documentation search
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+home: https://github.com/arcane-forge-ai/flame_mcp
+sources:
+  - https://github.com/arcane-forge-ai/flame_mcp
+maintainers:
+  - name: Flame MCP Team
+    email: bing@arcaneforge.ai
+keywords:
+  - mcp
+  - semantic-search
+  - documentation
+  - flame
+  - vector-database
+annotations:
+  category: AI/ML 

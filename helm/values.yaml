@@ -1,0 +1,140 @@
+# Default values for flame-mcp-server
+# This is a YAML-formatted file
+
+replicaCount: 2
+
+image:
+  repository: arcaneforgedev.azurecr.io/arcaneforge/flame-mcp
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: flame-mcp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2048Mi
+  requests:
+    cpu: 500m
+    memory: 1024Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# Application configuration
+config:
+  # Qdrant configuration (non-sensitive)
+  qdrant:
+    host: "http://qdrant-service"
+    port: "6333"
+  
+  # Collection configuration
+  collection:
+    name: "flame_docs"
+  
+  # OpenAI configuration (non-sensitive)
+  openai:
+    apiVersion: "2024-02-01"
+    modelName: "text-embedding-3-small"
+  
+  # Rate limiting configuration
+  rateLimiting:
+    maxRetries: "3"
+    baseDelay: "1.0"
+    batchDelay: "0.1"
+
+# Secret configuration (sensitive data)
+secrets:
+  # Azure OpenAI secrets (will be base64 encoded)
+  openai:
+    apiKey: ""
+    apiBase: ""
+  
+  # Qdrant secrets (if authentication needed)
+  qdrant:
+    token: ""
+
+# Environment variables from external secrets (optional)
+externalSecrets:
+  enabled: false
+  secretStore: ""
+
+# Persistence (for logs if needed)
+persistence:
+  enabled: false
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: ""
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network policy
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: [] 

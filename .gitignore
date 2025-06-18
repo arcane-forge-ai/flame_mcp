@@ -20,3 +20,6 @@ _build/
 .env
 playground*
 processing_state.json
+
+# Helm
+rendered.yaml

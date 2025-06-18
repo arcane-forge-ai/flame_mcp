@@ -1,0 +1,42 @@
+image:
+  tag: "20250617-214154"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2048Mi
+  requests:
+    cpu: 500m
+    memory: 1024Mi
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+
+# Application configuration
+config:
+  # Qdrant configuration (non-sensitive)
+  qdrant:
+    host: "http://azure-qdrant-loadbalancer.qdrant.svc.cluster.local"
+    port: "6333"
+  
+  # Collection configuration
+  collection:
+    name: "flame_docs"
+  
+  # OpenAI configuration (non-sensitive)
+  openai:
+    apiVersion: "2023-05-15"
+    modelName: "text-embedding-3-small"
+  
+  # Rate limiting configuration
+  rateLimiting:
+    maxRetries: "3"
+    baseDelay: "1.0"
+    batchDelay: "0.1"
+
+# Environment variables from external secrets (optional)
+externalSecrets:
+  enabled: false
+  secretStore: ""

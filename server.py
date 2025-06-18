@@ -258,5 +258,35 @@ def health_check(request: Request) -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
+@mcp.custom_route("/", methods=["GET"])
+def server_info(request: Request) -> JSONResponse:
+    """Provide information about the MCP server and how to connect to it."""
+    host = request.url.hostname or "localhost"
+    port = request.url.port or 8000
+    
+    return JSONResponse({
+        "server": "Flame Knowledge Base MCP Server",
+        "transport": "streamable-http",
+        "mcp_endpoint": f"http://{host}:{port}/mcp",
+        "health_endpoint": f"http://{host}:{port}/health",
+        "connection_info": {
+            "description": "This is a Model Context Protocol (MCP) server",
+            "usage": "Connect using an MCP client to the /mcp endpoint",
+            "tools": ["get_flame_knowledge"],
+            "client_examples": {
+                "fastmcp_client": f'Client("http://{host}:{port}/mcp")',
+                "cursor_config": {
+                    "mcpServers": {
+                        "flame": {
+                            "url": f"http://{host}:{port}/mcp",
+                            "env": {}
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+
 if __name__ == "__main__":
     mcp.run()
