@@ -1,7 +1,7 @@
 # Default values for flame-mcp-server
 # This is a YAML-formatted file
 
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: arcaneforgedev.azurecr.io/arcaneforge/flame-mcp

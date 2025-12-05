@@ -72,11 +72,17 @@ endif
 .PHONY: helm-template
 helm-template: ## Generate Helm template output for review
 	@echo "[HELM] Generating Helm templates..."
-	helm template test-release ./helm/ --dry-run -f ./helm/values-dev.yaml > ./helm/rendered.yaml
+	helm template test-release ./helm/ --dry-run -f ./helm/values-dev-with-secrets.yaml > ./helm/rendered.yaml
 	@echo "[HELM] Templates generated: ./helm/rendered.yaml"
 
 .PHONY: helm-install-dev
 helm-install-dev: ## Install Helm release
 	@echo "[HELM] Installing Helm release..."
-	helm install $(HELM_RELEASE) ./helm/ -f ./helm/values-dev.yaml -n $(NAMESPACE)
+	helm install $(HELM_RELEASE) ./helm/ -f ./helm/values-dev-with-secrets.yaml -n $(NAMESPACE)
 	@echo "[HELM] Install complete" 
+
+.PHONY: helm-upgrade-dev
+helm-upgrade-dev: ## Upgrade Helm release
+	@echo "[HELM] Upgrading Helm release..."
+	helm upgrade $(HELM_RELEASE) ./helm/ -f ./helm/values-dev-with-secrets.yaml -n $(NAMESPACE)
+	@echo "[HELM] Upgrade complete" 

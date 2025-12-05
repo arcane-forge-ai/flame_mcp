@@ -8,7 +8,8 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, FileResponse, HTMLResponse
+import os
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +27,8 @@ mcp = FastMCP(
     name="Flame Knowledge Base",
     on_duplicate_tools="error",
 )
+
+# Static files are served through custom routes below
 
 # Initialize clients
 def _init_clients():
@@ -259,6 +262,16 @@ def health_check(request: Request) -> JSONResponse:
 
 
 @mcp.custom_route("/", methods=["GET"])
+def root_redirect(request: Request):
+    """Redirect root to the web interface."""
+    return FileResponse("web/index.html")
+
+@mcp.custom_route("/docs", methods=["GET"])
+def docs_redirect(request: Request):
+    """Redirect /docs to the documentation page."""
+    return FileResponse("web/docs.html")
+
+@mcp.custom_route("/api/info", methods=["GET"])
 def server_info(request: Request) -> JSONResponse:
     """Provide information about the MCP server and how to connect to it."""
     host = request.url.hostname or "localhost"
@@ -269,6 +282,8 @@ def server_info(request: Request) -> JSONResponse:
         "transport": "streamable-http",
         "mcp_endpoint": f"http://{host}:{port}/mcp",
         "health_endpoint": f"http://{host}:{port}/health",
+        "web_interface": f"http://{host}:{port}/",
+        "documentation": f"http://{host}:{port}/docs",
         "connection_info": {
             "description": "This is a Model Context Protocol (MCP) server",
             "usage": "Connect using an MCP client to the /mcp endpoint",
