@@ -4,6 +4,9 @@
 replicaCount: 1
 
 image:
+  # Default repository for Azure Container Registry
+  # For GCP, override in values-gcp-dev-secret.yaml with:
+  # repository: us-central1-docker.pkg.dev/your-project/your-repo/flame-mcp-server
   repository: arcaneforgedev.azurecr.io/arcaneforge/flame-mcp
   pullPolicy: IfNotPresent
   tag: "latest"
@@ -51,6 +54,12 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+# GCP Managed Certificate (only works on GKE)
+managedCertificate:
+  enabled: false
+  domains: []
+    # - your-domain.example.com
 
 resources:
   limits:

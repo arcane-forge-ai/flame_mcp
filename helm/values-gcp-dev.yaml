@@ -1,0 +1,70 @@
+image:
+  repository: us-central1-docker.pkg.dev/arcane-forge-dev/arcane-forge-dev/flame-mcp-server
+  tag: "20260104-013107"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 500m
+    memory: 1024Mi
+
+# Service configuration
+# For GKE, using LoadBalancer will provision a GCP Load Balancer
+# Consider using Ingress with GCE ingress controller for production
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  annotations:
+    # Enable Network Endpoint Groups for container-native load balancing
+    cloud.google.com/neg: '{"ingress": true}'
+
+# Ingress configuration (recommended for production on GCP)
+ingress:
+  enabled: true
+  className: "gce"  # GKE uses 'gce' ingress class
+  annotations:
+    # GCP-specific ingress annotations
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "flame-mcp-dev"
+  hosts:
+    - host: flame-mcp-server.dev.arcaneforge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+
+managedCertificate:
+  enabled: true
+  domains:
+    - flame-mcp-server.dev.arcaneforge.ai
+
+# Application configuration
+config:
+  # Qdrant configuration (non-sensitive)
+  qdrant:
+    host: http://qdrant-ilb.qdrant.svc.cluster.local
+    port: "6333"
+  
+  # Collection configuration
+  collection:
+    name: "flame_docs"
+  
+  # OpenAI configuration (non-sensitive)
+  openai:
+    apiVersion: "2023-05-15"
+    modelName: "text-embedding-3-small"
+  
+  # Rate limiting configuration
+  rateLimiting:
+    maxRetries: "3"
+    baseDelay: "1.0"
+    batchDelay: "0.1"
+
+# Secret configuration (add your actual secrets here)
+secrets:
+  # OpenAI secrets (REQUIRED - add your actual API key)
+  openai:
+    apiKey: ""
+    apiBase: ""

@@ -23,4 +23,6 @@ processing_state.json
 
 # Helm
 rendered.yaml
+rendered-gcp.yaml
 values-dev-with-secrets.yaml
+values-gcp-dev-secret.yaml

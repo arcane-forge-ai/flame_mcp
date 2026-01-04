@@ -330,6 +330,136 @@ with patch('server.qdrant_client'), patch('server.openai_client'):
 "
 ```
 
+## 🚀 Deployment
+
+The Flame MCP Server supports deployment to both Azure Kubernetes Service (AKS) and Google Kubernetes Engine (GKE).
+
+### Prerequisites
+
+- Docker installed and running
+- Azure CLI (for Azure deployment) or gcloud CLI (for GCP deployment)
+- kubectl configured
+- Helm 3.x installed
+- Access to container registry (Azure Container Registry or Google Artifact Registry)
+
+### Azure Deployment
+
+1. **Configure Azure settings in Makefile**:
+   - `REGISTRY`: Your Azure Container Registry
+   - `REPO`: Repository name
+   - `NAMESPACE`: Kubernetes namespace
+
+2. **Build and push to Azure**:
+   ```bash
+   # Build and push in one command
+   make deploy-azure
+   
+   # Or step by step:
+   make build-acr          # Build image for ACR
+   make login-acr          # Login to ACR
+   make push TAG=mytag     # Push with specific tag
+   ```
+
+3. **Deploy to AKS**:
+   ```bash
+   # Generate Helm template for review
+   make helm-template
+   
+   # Install or upgrade
+   make helm-install-dev    # First time
+   make helm-upgrade-dev    # Updates
+   ```
+
+4. **Update secrets in `helm/values-dev-with-secrets.yaml`**:
+   ```yaml
+   secrets:
+     openai:
+       apiKey: "your-azure-openai-api-key"
+       apiBase: "https://your-resource.openai.azure.com/"
+   ```
+
+### GCP Deployment
+
+1. **Configure GCP settings in Makefile**:
+   - `GCP_PROJECT`: Your GCP project ID
+   - `GCP_REGION`: Region for Artifact Registry and GKE
+   - `GCP_CLUSTER`: Your GKE cluster name
+
+2. **Build and push to GCP**:
+   ```bash
+   # Build and push in one command
+   make deploy-gcp
+   
+   # Or step by step:
+   make build-gcr          # Build image for GCR
+   make login-gcr          # Login to Artifact Registry
+   make push-gcr TAG=mytag # Push with specific tag
+   ```
+
+3. **Authenticate with GKE**:
+   ```bash
+   make gke-auth
+   ```
+
+4. **Deploy to GKE**:
+   ```bash
+   # Generate Helm template for review
+   make helm-template-gcp
+   
+   # Install or upgrade
+   make helm-install-gcp    # First time
+   make helm-upgrade-gcp    # Updates
+   ```
+
+5. **Update secrets in `helm/values-gcp-dev-secret.yaml`**:
+   ```yaml
+   secrets:
+     openai:
+       apiKey: "your-openai-api-key"
+       apiBase: "your-openai-api-base-url"
+   config:
+     qdrant:
+       host: "http://your-qdrant-service.namespace.svc.cluster.local"
+   ```
+
+### Multi-Cloud Deployment
+
+Deploy to both Azure and GCP simultaneously:
+
+```bash
+make deploy-all TAG=mytag
+```
+
+### Available Make Commands
+
+Run `make help` to see all available commands:
+
+- **Build Commands**: `build`, `build-acr`, `build-gcr`
+- **Authentication**: `login-acr`, `login-gcr`, `gke-auth`
+- **Push Commands**: `push`, `push-gcr`
+- **Helm Commands**: `helm-template`, `helm-install-dev`, `helm-upgrade-dev`, `helm-uninstall`
+- **GCP Helm**: `helm-template-gcp`, `helm-install-gcp`, `helm-upgrade-gcp`, `helm-uninstall-gcp`
+- **Deployment Workflows**: `deploy-azure`, `deploy-gcp`, `deploy-all`
+
+### Configuration Files
+
+- **Azure**: `helm/values-dev-with-secrets.yaml`
+- **GCP**: `helm/values-gcp-dev-secret.yaml`
+- **Base**: `helm/values.yaml` (shared defaults)
+
+### Monitoring Deployment
+
+```bash
+# Check pod status
+kubectl get pods -n mcp
+
+# View logs
+kubectl logs -f deployment/flame-mcp-server -n mcp
+
+# Check service
+kubectl get svc -n mcp
+```
+
 ## Thanks
 
 This project is inspired by this [Godot RAG MCP](https://github.com/zivshek/rag-mcp)

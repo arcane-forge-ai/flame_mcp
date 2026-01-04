@@ -1,0 +1,14 @@
+{{- if .Values.managedCertificate.enabled -}}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ include "flame-mcp-server.fullname" . }}
+  labels:
+    {{- include "flame-mcp-server.labels" . | nindent 4 }}
+spec:
+  domains:
+    {{- range .Values.managedCertificate.domains }}
+    - {{ . }}
+    {{- end }}
+{{- end }}
+
